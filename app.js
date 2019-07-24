@@ -16,11 +16,11 @@ var allProducts = [];
 var totalClicks = 0;
 
 // sets contructer and properties
-function Product(name, ext) {
+function Product(name, ext, clicks, views) {
     this.name = name;
     this.imageUrl = './busMallAsset/' + name + '.' + ext;
-    this.clicks = 0;
-    this.views = 0;
+    this.clicks = clicks || 0;
+    this.views = views || 0;
     allProducts.push(this);
 };
 
@@ -78,6 +78,7 @@ function handleVote(event) {
         if (allProducts[i].name === productName) {
             allProducts[i].clicks++;
             totalClicks++;
+            saveClicks();
             render();
         }
     }
@@ -87,7 +88,8 @@ function handleVote(event) {
         for (var i = 0; i < imgs.length; i++) {
             imgs[i].removeEventListener('click', handleVote);
         }
-        displayResults();
+     //second guess for where localstorage goes
+     displayResults();
     }
     //console.table(allProducts);
 
@@ -113,11 +115,21 @@ function displayResults() {
     var voteCounts = [];
     for (var i = 0; i < allProducts.length; i++) {
         voteCounts.push(allProducts[i].clicks);
+       
+    ///where i initially thought storage goes //////////////////////////////////////////////////
+     
     }
-   
+    // localStorage.setItem('voteCounts', JSON.stringify(voteCounts));
+    // localStorage.setItem('productNames', JSON.stringify(productNames));   
+
+    // localStorage.getItem('voteCounts');
+    // console.log(localStorage)
+    // var saveData = localStorage.getItem('voteCounts');
+
       var ctx = document.getElementById('myChart').getContext('2d');
     var myChart = new Chart(ctx, {
         type: 'bar',
+       
         data: {
             labels: productNames,
             datasets: [{
@@ -153,7 +165,33 @@ function displayResults() {
         }
     })
 };
+function saveClicks(){
+    localStorage.setItem('products', JSON.stringify(allProducts));
+    localStorage.setItem('totalClicks', JSON.stringify({clicks: totalClicks}));
+}
+function getStorage(){
+    var jsonClicks = localStorage.getItem('totalClicks');
+    if (jsonClicks){
+        var clicksObject = JSON.parse(jsonClicks);
+        totalClicks = clicksObject.clicks;
+    }
+    
+    var jsonProducts = localStorage.getItem('products');
+    if (jsonProducts){
+        var productsArray = JSON.parse(jsonProducts);
+        allProducts = [];
+        for (var i = 0; i < productsArray.length; i++){
+            var productObject = productsArray[i];
+            new Product(productObject.name, productObject.imageUrl.substring(productObject.imageUrl.length-3), productObject.clicks, productObject.views);
+        }
+    }
+}
 
-
-createProducts();
-render();
+window.addEventListener('load', function (){
+    getStorage();
+    createProducts();
+    render();
+    if(totalClicks >= 25){
+        displayResults();
+    }
+});
